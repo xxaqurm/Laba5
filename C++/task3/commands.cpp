@@ -10,13 +10,19 @@ void CREATE_TRAM(string tramName, vector<string> stops, map<string, vector<strin
 
 void TRAMS_IN_STOP(string stop, map<string, vector<string>>& tramRoutes) {
     /* Вывод всех трамваев, которые проходят через остановку stop */
+    bool tramExists = false;
     for (auto& tram : tramRoutes) {
         for (auto& tramStop : tram.second) {
             if (tramStop == stop) {
                 cout << tram.first << " ";
+                tramExists = true;
                 break;
             }
         }
+    }
+    if (!tramExists) {
+        cout << "Ни один трамвай не ходит через остановку " << stop << "." << endl;
+        return;
     }
     cout << endl;
 }
@@ -25,27 +31,15 @@ void STOPS_IN_TRAM(string tramName, map<string, vector<string>>& tramRoutes) {
     /* Вывод всех остановок, через которые проезжает трамвай tramName */
     auto it = tramRoutes.find(tramName);
     if (it == tramRoutes.end()) {
-        cout << "No tram" << endl;
+        cout << "Трамвая с таким именем не существует." << endl;
         return;
     }
 
-    for (const string& stop : it->second) {
-        cout << "Остановка " << stop << ": ";
-        bool hasOther = false;
-        for (auto& tram : tramRoutes) {
-            if (tram.first != tramName) {
-                for (const string& s : tram.second) {
-                    if (s == stop) {
-                        cout << tram.first << " ";
-                        hasOther = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if (!hasOther) cout << "no interchange";
-        cout << endl;
+    cout << "Остановки трамвая " << tramName << ": ";
+    for (auto& stop : tramRoutes[tramName]) {
+        cout << stop << " ";
     }
+    cout << endl;
 }
 
 void TRAMS(map<string, vector<string>>& tramRoutes) {
