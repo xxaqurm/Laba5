@@ -2,94 +2,110 @@
 #include <vector>
 #include <map>
 
-#include "utils.h"
+#include "commands.h"
 
 using namespace std;
 
-int main() {
-    string command = "NONE";;
+Type parseCommand(const string& command) {
+    if (command == "CREATE_TRAM") return Type::CREATE_TRAM;
+    if (command == "TRAMS_IN_STOP") return Type::TRAMS_IN_STOP;
+    if (command == "STOPS_IN_TRAM") return Type::STOPS_IN_TRAM;
+    if (command == "TRAMS") return Type::TRAMS;
+    if (command == "EXIT") return Type::EXIT;
+    return Type::UNKNOWN;
+}
 
-    
+int main() {
+    string inputCommand;
     map<string, vector<string>> tramRoutes;
 
     while (true) {
         cout << "Введите команду (CREATE_TRAM, TRAMS_IN_STOP, STOPS_IN_TRAM, TRAMS, EXIT): ";
-        cin >> command;
+        cin >> inputCommand;
 
-        if (command == "CREATE_TRAM") {
-            string tramName = "NONE";
-            cin >> tramName;
+        Type command = parseCommand(inputCommand);
 
-            string stop = "";
-            string allStops = "";
-            getline(cin, allStops);
-            allStops += " ";
-
-            vector<string> stops;
-            for (char& c : allStops) {
-                if (c != ' ') {
-                    stop += c;
-                } else if (stop != "") {
-                    stops.push_back(stop);
-                    stop = "";
+        switch (command) {
+            case Type::CREATE_TRAM: {
+                string tramName;
+                cin >> tramName;
+                string line;
+                getline(cin, line);
+                line += " ";
+                
+                string stopName = "";
+                vector<string> stops;
+                for (char c : line) {
+                    if (c != ' ') {
+                        stopName += c;
+                    } else if (!stopName.empty()) {
+                        stops.push_back(stopName);
+                        stopName = "";
+                    }
                 }
+                CREATE_TRAM(tramName, stops, tramRoutes);
+                break;
             }
-            
-            CREATE_TRAM(tramName, stops, tramRoutes);
-        } else if (command == "TRAMS_IN_STOP") {
-            string stop = "";
-            string allStops = "";
-            getline(cin, allStops);
-            allStops += " ";
+            case Type::TRAMS_IN_STOP: {
+                string line;
+                getline(cin, line);
+                line += " ";
 
-            vector<string> stops;
-            for (char& c : allStops) {
-                if (c != ' ') {
-                    stop += c;
-                } else if (stop != "") {
-                    stops.push_back(stop);
-                    stop = "";
+                string stopName = "";
+                vector<string> stops;
+                for (char c : line) {
+                    if (c != ' ') {
+                        stopName += c;
+                    } else if (!stopName.empty()) {
+                        stops.push_back(stopName);
+                        stopName = "";
+                    }
                 }
-            }
 
-            if (stops.size() > 1) {
-                cout << "Остановка должна быть одна." << endl;
-                continue;
-            }
-            stop = stops[0];
-
-            TRAMS_IN_STOP(stop, tramRoutes);
-        } else if (command == "STOPS_IN_TRAM") {
-            string tramName;
-            string allTrams = "";
-            getline(cin, allTrams);
-            allTrams += " ";
-
-            vector<string> trams;
-            for (char& c : allTrams) {
-                if (c != ' ') {
-                    tramName += c;
-                } else if (tramName != "") {
-                    trams.push_back(tramName);
-                    tramName = "";
+                if (stops.size() != 1) {
+                    cout << "Неверный ввод. Ожидалось одно название остановки." << endl;
+                    break;
                 }
-            }
+                stopName = stops[0];
 
-            if (trams.size() > 1) {
-                cout << "Трамвай должен быть один." << endl;
-                continue;
+                TRAMS_IN_STOP(stopName, tramRoutes);
+                break;
             }
-            tramName = trams[0];
-            
-            STOPS_IN_TRAM(tramName, tramRoutes);
-        } else if (command == "TRAMS") {
-            TRAMS(tramRoutes);
-        } else if (command == "EXIT") {
-            break;
-        } else {
-            cout << "Неизвестная команда. Попробуйте еще раз." << endl;
+            case Type::STOPS_IN_TRAM: {
+                string line;
+                getline(cin, line);
+                line += " ";
+
+                string tramName = "";
+                vector<string> trams;
+                for (char c : line) {
+                    if (c != ' ') {
+                        tramName += c;
+                    } else if (!tramName.empty()) {
+                        trams.push_back(tramName);
+                        tramName = "";
+                    }
+                }
+
+                if (trams.size() != 1) {
+                    cout << "Неверный ввод. Ожидалось одно название трамвая." << endl;
+                    break;
+                }
+                tramName = trams[0];
+                
+                STOPS_IN_TRAM(tramName, tramRoutes);
+                break;
+            }
+            case Type::TRAMS: {
+                TRAMS(tramRoutes);
+                break;
+            }
+            case Type::EXIT: {
+                return 0;
+            }
+            default:
+                cout << "Неизвестная команда. Попробуйте еще раз." << endl;
+                break;
         }
     }
-
-    return 0;
 }
