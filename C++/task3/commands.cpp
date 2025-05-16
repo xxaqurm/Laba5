@@ -11,12 +11,18 @@ void CREATE_TRAM(string tramName, vector<string> stops, map<string, vector<strin
         set<string> uniqStops(stops.begin(), stops.end());
         if (stops.size() > uniqStops.size()) {
             cout << "У трамвая несколько остановок с одним и тем же названием." << endl;
+            return;
         } else if (stops.size() == 1) {
             cout << "У трамвая не может быть одной остановки." << endl;
-        } 
-        else {
-            tramRoutes[tramName] = stops;
+            return;
         }
+        for (auto& tram : tramRoutes) {
+            if (tram.second == stops) {
+                cout << "Трамвай с такими остановками уже существует." << endl;
+                return;
+            }
+        }
+        tramRoutes[tramName] = stops;
     } else {
         cout << "Трамвай с таким названием уже существует." << endl;
     }
