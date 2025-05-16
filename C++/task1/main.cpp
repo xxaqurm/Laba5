@@ -38,6 +38,8 @@ int main() {
                     break;
                 }
                 cout << "Некорректный ввод. Попробуйте еще раз: ";
+                cin.clear();
+                cin.ignore();
             }
             if (storage[{ zone - 'A', section, verticalSection, shelf }].find(itemName) != storage[{ zone - 'A', section, verticalSection, shelf }].end() && storage[{ zone - 'A', section, verticalSection, shelf }][itemName] + items > 10 || items > 10) {
                 cout << "Недостаточно места на складе. Максимальное количество предметов в ячейке: " << 10 << endl;
@@ -59,6 +61,8 @@ int main() {
                     break;
                 }
                 cout << "Некорректный ввод. Попробуйте еще раз: ";
+                cin.clear();
+                cin.ignore();
             }
             if (storage[{ zone - 'A', section, verticalSection, shelf }].find(itemName) == storage[{ zone - 'A', section, verticalSection, shelf }].end()) {
                 cout << "Предмет не найден на складе.\n";

@@ -1,11 +1,26 @@
 #include "commands.h"
 #include <iostream>
+#include <set>
 
 using namespace std;
 
 void CREATE_TRAM(string tramName, vector<string> stops, map<string, vector<string>>& tramRoutes) {
     /* Создание трамвая tramName, который проходит через остановки stops */
-    tramRoutes[tramName] = stops;
+    auto it = tramRoutes.find(tramName);
+    if (it == tramRoutes.end()) {
+        set<string> uniqStops(stops.begin(), stops.end());
+        if (stops.size() > uniqStops.size()) {
+            cout << "У трамвая несколько остановок с одним и тем же названием." << endl;
+        } else if (stops.size() == 1) {
+            cout << "У трамвая не может быть одной остановки." << endl;
+        } 
+        else {
+            tramRoutes[tramName] = stops;
+        }
+    } else {
+        cout << "Трамвай с таким названием уже существует." << endl;
+    }
+
 }
 
 void TRAMS_IN_STOP(string stop, map<string, vector<string>>& tramRoutes) {
