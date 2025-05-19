@@ -60,18 +60,9 @@ void STOPS_IN_TRAM(string tramName, map<string, vector<string>>& tramRoutes) {
     cout << "Остановки трамвая " << tramName << ": ";
     for (auto& stop : tramRoutes[tramName]) {
         cout << stop << " ";
-    }
-    cout << endl;
-    
-    for (auto& tram: tramRoutes) {
-        for (auto& tramStop : tram.second) {
-            if (find(tramRoutes[tramName].begin(), tramRoutes[tramName].end(), tramStop) != tramRoutes[tramName].end() && tramName != tram.first) {
-                cout << tram.first << ": ";
-                for (auto& tramStop : tramRoutes[tram.first]) {
-                    cout << tramStop << " ";
-                }
-                cout << endl;
-                break;
+        for (auto& tram : tramRoutes) {
+            if (tram.first != tramName && find(tram.second.begin(), tram.second.end(), stop) != tram.second.end()) {
+                cout << "(" << tram.first << ") ";
             }
         }
     }
