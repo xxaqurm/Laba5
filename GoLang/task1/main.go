@@ -8,132 +8,158 @@ import (
 	"strings"
 )
 
-type Address [4]int
-
-type Storage map[Address]map[string]int
-
 const (
-	ShelvesPerVerticalSection = 5
-	VerticalSectionCount      = 1
-	TotalItemStorage          = 1500
-	StorageZoneCount          = 10
-	ShelvesPerZone            = 3
-	SlotStorage               = 10
+	SHELVESPERVERTICALSECTION = 5
+	VERTICALSECTIONCOUNT      = 1
+	TOTALITEMSTORAGE          = 1500
+	STORAGEZONECOUNT          = 10
+	SHELVESPERZONE            = 3
+	SLOTSTORAGE               = 10
 )
 
-func validateInput(itemName string, items int, zone rune, section, verticalSection, shelf int, sectionCode string) bool {
-	if zone < 'A' || zone > 'A'+rune(StorageZoneCount)-1 {
-		fmt.Printf("Некорректная зона. Зона должна быть от A до %c\n", 'A'+StorageZoneCount-1)
+type Address [4]int
+type Storage map[Address]map[string]int
+
+func main() {
+	storage := make(Storage)
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Println("Для добавления предмета воспользуйтесь командой ADD (ADD <название> <количество> <ячейка>)")
+	fmt.Println("Для удаления предмета воспользуйтесь командой REMOVE (REMOVE <название> <количество> <ячейка>)")
+	fmt.Println("Для получения информации о складе воспользуйтесь командой INFO")
+	fmt.Println("Для выхода из программы воспользуйтесь командой EXIT")
+
+	for {
+		fmt.Print("Введите команду: ")
+		input, _ := reader.ReadString('\n')
+		commandParts := strings.Fields(strings.TrimSpace(input))
+
+		if len(commandParts) == 0 {
+			continue
+		}
+
+		command := strings.ToUpper(commandParts[0])
+
+		switch command {
+		case "ADD", "REMOVE":
+			for {
+				fmt.Print("Введите <название> <кол-во> <ячейка>: ")
+				line, _ := reader.ReadString('\n')
+				parts := strings.Fields(strings.TrimSpace(line))
+				if len(parts) != 3 {
+					fmt.Println("Некорректный ввод. Попробуйте еще раз.")
+					continue
+				}
+
+				itemName := parts[0]
+				items, err := strconv.Atoi(parts[1])
+				sectionCode := parts[2]
+				if err != nil {
+					fmt.Println("Количество должно быть числом.")
+					continue
+				}
+				if len(sectionCode) != 4 {
+					fmt.Println("Код ячейки должен быть из 4 символов.")
+					continue
+				}
+
+				zone := sectionCode[0]
+				section := int(sectionCode[1] - '0')
+				vertical := int(sectionCode[2] - '0')
+				shelf := int(sectionCode[3] - '0')
+
+				if !validateInput(command, itemName, items, zone, section, vertical, shelf, sectionCode, storage) {
+					continue
+				}
+
+				addr := Address{int(zone - 'A'), section, vertical, shelf}
+
+				if command == "ADD" {
+					if storage[addr] != nil && storage[addr][itemName]+items > SLOTSTORAGE || items > SLOTSTORAGE {
+						fmt.Println("Недостаточно места на складе. Максимум в ячейке:", SLOTSTORAGE)
+						continue
+					}
+					ADD(storage, addr, itemName, items)
+				} else {
+					if storage[addr] == nil || storage[addr][itemName] < items {
+						fmt.Println("Недостаточно предметов на складе или предмет отсутствует.")
+						continue
+					}
+					REMOVE(storage, addr, itemName, items)
+				}
+				break
+			}
+		case "INFO":
+			INFO(storage)
+		case "EXIT":
+			return
+		default:
+			fmt.Println("Неизвестная команда. Попробуйте еще раз.")
+		}
+		fmt.Println("----------------------------------------")
+	}
+}
+
+func validateInput(command, itemName string, items int, zone byte, section, vertical, shelf int, code string, storage Storage) bool {
+	if zone < 'A' || zone > 'A'+STORAGEZONECOUNT-1 {
+		fmt.Printf("Некорректная зона. Зона должна быть от A до %c\n", 'A'+STORAGEZONECOUNT-1)
 		return false
-	} else if section < 1 || section > ShelvesPerZone {
-		fmt.Printf("Некорректный номер секции. Секция должна быть от 1 до %d\n", ShelvesPerZone)
+	}
+	if section < 1 || section > SHELVESPERZONE {
+		fmt.Printf("Некорректная секция. Должна быть от 1 до %d\n", SHELVESPERZONE)
 		return false
-	} else if verticalSection < 1 || verticalSection > VerticalSectionCount {
-		fmt.Printf("Некорректный номер вертикальной секции. Вертикальная секция должна быть от 1 до %d\n", VerticalSectionCount)
+	}
+	if vertical < 1 || vertical > VERTICALSECTIONCOUNT {
+		fmt.Printf("Некорректная вертикальная секция. Должна быть от 1 до %d\n", VERTICALSECTIONCOUNT)
 		return false
-	} else if shelf < 1 || shelf > ShelvesPerVerticalSection {
-		fmt.Printf("Некорректный номер полки. Полка должна быть от 1 до %d\n", ShelvesPerVerticalSection)
+	}
+	if shelf < 1 || shelf > SHELVESPERVERTICALSECTION {
+		fmt.Printf("Некорректная полка. Должна быть от 1 до %d\n", SHELVESPERVERTICALSECTION)
 		return false
-	} else if items <= 0 {
-		fmt.Println("Некорректное количество предметов. Количество должно быть больше 0.")
+	}
+	if items <= 0 {
+		fmt.Println("Количество должно быть больше 0.")
 		return false
-	} else if len(sectionCode) != 4 {
-		fmt.Println("Некорректный код секции. Код секции должен состоять из 4 символов.")
+	}
+	if len(code) != 4 {
+		fmt.Println("Код ячейки должен быть длиной 4 символа.")
 		return false
 	}
 	return true
 }
 
-func info(storage Storage) {
-	totalItems := 0
-	storageLoad := make([]int, StorageZoneCount)
-	fmt.Println("Информация о складе:")
-	for addr, itemsMap := range storage {
-		zoneIndex := addr[0]
-		for name, count := range itemsMap {
-			fmt.Printf("Зона: %c, Секция: %d, Вертикальная секция: %d, Полка: %d, Предмет: %s, Количество: %d\n",
-				'A'+zoneIndex, addr[1], addr[2], addr[3], name, count)
-			totalItems += count
-			storageLoad[zoneIndex] += count
-		}
-	}
-	fmt.Println("Загрузка склада по зонам:")
-	for i, load := range storageLoad {
-		fmt.Printf("Зона %c: %d\n", 'A'+i, load)
-	}
-	fmt.Printf("Общее количество предметов на складе: %d\n", totalItems)
-}
-
-func add(storage Storage, address Address, itemName string, items int) {
-	if storage[address] == nil {
+func ADD(storage Storage, address Address, itemName string, items int) {
+	if _, exists := storage[address]; !exists {
 		storage[address] = make(map[string]int)
 	}
 	storage[address][itemName] += items
-	fmt.Printf("Добавлено %d предметов %s в ячейку %c%d%d%d\n", items, itemName, 'A'+address[0], address[1], address[2], address[3])
+	fmt.Printf("Добавлено %d предметов %s в ячейку %c%d%d%d\n",
+		items, itemName, address[0]+'A', address[1], address[2], address[3])
 }
 
-func remove(storage Storage, address Address, itemName string, items int) {
+func REMOVE(storage Storage, address Address, itemName string, items int) {
 	storage[address][itemName] -= items
-	fmt.Printf("Удалено %d предметов %s из ячейки %c%d%d%d\n", items, itemName, 'A'+address[0], address[1], address[2], address[3])
+	fmt.Printf("Удалено %d предметов %s из ячейки %c%d%d%d\n",
+		items, itemName, address[0]+'A', address[1], address[2], address[3])
 }
 
-func main() {
-	storage := make(Storage)
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("ADD <название> <кол-во> <ячейка>, REMOVE, INFO, EXIT")
+func INFO(storage Storage) {
+	fmt.Println("Информация о складе:")
+	totalItems := 0
+	storageLoad := make([]int, STORAGEZONECOUNT)
 
-	for {
-		fmt.Print("Введите команду: ")
-		if !scanner.Scan() {
-			break
+	for addr, itemsMap := range storage {
+		for item, count := range itemsMap {
+			fmt.Printf("Зона: %c, Секция: %d, Вертикальная секция: %d, Полка: %d, Предмет: %s, Количество: %d\n",
+				addr[0]+'A', addr[1], addr[2], addr[3], item, count)
+			totalItems += count
+			storageLoad[addr[0]] += count
 		}
-		input := scanner.Text()
-		parts := strings.Fields(input)
-		if len(parts) == 0 {
-			continue
-		}
-		command := parts[0]
-		switch command {
-		case "ADD", "REMOVE":
-			if len(parts) != 4 {
-				fmt.Println("Неверный формат команды. Пример: ADD Orange 3 A112")
-				continue
-			}
-			itemName := parts[1]
-			items, err := strconv.Atoi(parts[2])
-			if err != nil {
-				fmt.Println("Некорректное количество.")
-				continue
-			}
-			sectionCode := parts[3]
-			zone := rune(sectionCode[0])
-			section := int(sectionCode[1] - '0')
-			vertical := int(sectionCode[2] - '0')
-			shelf := int(sectionCode[3] - '0')
-			if !validateInput(itemName, items, zone, section, vertical, shelf, sectionCode) {
-				continue
-			}
-			address := Address{int(zone - 'A'), section, vertical, shelf}
-			if command == "ADD" {
-				if storage[address][itemName]+items > SlotStorage {
-					fmt.Println("Недостаточно места в ячейке. Максимум 10.")
-					continue
-				}
-				add(storage, address, itemName, items)
-			} else {
-				if count, ok := storage[address][itemName]; !ok || count < items {
-					fmt.Println("Недостаточно предметов или предмет не найден.")
-					continue
-				}
-				remove(storage, address, itemName, items)
-			}
-		case "INFO":
-			info(storage)
-		case "EXIT":
-			return
-		default:
-			fmt.Println("Неизвестная команда.")
-		}
-		fmt.Println("----------------------------------------")
 	}
+
+	fmt.Println("Загрузка склада по зонам:")
+	for i, count := range storageLoad {
+		fmt.Printf("Зона %c: %d\n", 'A'+i, count)
+	}
+	fmt.Printf("Общее количество предметов на складе: %d\n", totalItems)
 }

@@ -1,6 +1,7 @@
+#include <iostream>
+#include <iomanip>
 #include <vector>
 #include <map>
-#include <iostream>
 
 using namespace std;
 
@@ -68,17 +69,16 @@ void INFO(map<vector<int>, map<string, int>> storage) {
     for (int i = 0; i < STORAGEZONECOUNT; ++i) {
         cout << "Зона " << (char)('A' + i) << ": " << storageLoad[i] << endl;
     }
-    cout << "Общее количество предметов на складе: " << totalItems << endl;
+    cout << "Общая загруженность склада: " << fixed << setprecision(1) << (totalItems / (double)TOTALITEMSTORAGE) * 100 << "%" << endl;
 }
 
 void ADD(map<vector<int>, map<string, int>>& storage, vector<int> address, string itemName, int items) {
     /* Добавляет предмет на склад */
     int totalItems = 0;
-    for (auto& zone : storage) {
-        for (auto& item : zone.second) {
-            totalItems += item.second;
-        }
+    for (auto& item : storage[address]) {
+        totalItems += item.second;
     }
+
     if (totalItems > 10) {
         cout << "Количество предметов в ячейке не может превышать 10." << endl;
         return;

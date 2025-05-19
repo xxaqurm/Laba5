@@ -4,106 +4,98 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
 
-type WindowQueue struct {
-	time    int
-	clients []string
-}
-
 func main() {
 	reader := bufio.NewReader(os.Stdin)
 
-	windowCount := 0
+	var windowCount int
 	for windowCount < 1 {
 		fmt.Print("Введите количество окон: ")
-		line, _ := reader.ReadString('\n')
-		line = strings.TrimSpace(line)
-		n, err := strconv.Atoi(line)
-		if err != nil || n < 1 {
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+		count, err := strconv.Atoi(input)
+		if err != nil || count < 1 {
 			fmt.Println("Количество окон должно быть больше 0.")
 			continue
 		}
-		windowCount = n
+		windowCount = count
 	}
 
-	windowQueues := make([]WindowQueue, windowCount)
+	type Window struct {
+		totalTime int
+		clients   []string
+	}
 
-	numberOfClients := 0
-	clients := make([]struct {
+	type Client struct {
 		name string
 		time int
-	}, 0)
+	}
+
+	windowQueues := make([]Window, windowCount)
+	var clients []Client
+	numberOfClients := 0
 
 	for {
-		fmt.Print("Введите команду (ENQUEUE [time], DEQUEUE, EXIT): ")
-		line, _ := reader.ReadString('\n')
-		line = strings.TrimSpace(line)
-
-		// Разбиваем строку на слова
-		parts := strings.Fields(line)
-		if len(parts) == 0 {
-			fmt.Println("Введите команду.")
-			continue
-		}
-
-		command := strings.ToUpper(parts[0]) // для удобства сравниваем в верхнем регистре
+		fmt.Print("Введите команду (ENQUEUE, DISTRIBUTE): ")
+		cmdInput, _ := reader.ReadString('\n')
+		command := strings.ToUpper(strings.TrimSpace(cmdInput))
 
 		switch command {
 		case "ENQUEUE":
-			if len(parts) < 2 {
-				fmt.Println("Команда ENQUEUE требует указать время, например: ENQUEUE 5")
-				continue
-			}
-			timeVal, err := strconv.Atoi(parts[1])
-			if err != nil || timeVal < 1 {
-				fmt.Println("Время должно быть положительным числом.")
-				continue
-			}
 			numberOfClients++
-			clientName := "T" + strconv.Itoa(numberOfClients)
-			clients = append(clients, struct {
-				name string
-				time int
-			}{name: clientName, time: timeVal})
+			fmt.Print("Введите время обслуживания клиента: ")
+			timeInput, _ := reader.ReadString('\n')
+			timeInput = strings.TrimSpace(timeInput)
+			t, err := strconv.Atoi(timeInput)
+			if err != nil || t < 1 {
+				fmt.Println("Время должно быть больше 0.")
+				continue
+			}
+			clientName := fmt.Sprintf("T%d", numberOfClients)
+			clients = append(clients, Client{name: clientName, time: t})
 
-		case "DEQUEUE":
+		case "DISTRIBUTE":
 			if len(clients) == 0 {
 				fmt.Println("Нет клиентов в очереди.")
 				continue
 			}
 
+			// Сортировка клиентов по убыванию времени
+			sort.Slice(clients, func(i, j int) bool {
+				return clients[i].time > clients[j].time
+			})
+
+			// Распределение клиентов по наименее загруженным окнам
 			for _, client := range clients {
-				bestWindow := 0
-				bestTime := windowQueues[0].time
-				for i := 1; i < len(windowQueues); i++ {
-					if windowQueues[i].time < bestTime {
-						bestTime = windowQueues[i].time
-						bestWindow = i
+				bestIndex := 0
+				bestTime := windowQueues[0].totalTime
+				for i := 1; i < windowCount; i++ {
+					if windowQueues[i].totalTime < bestTime {
+						bestIndex = i
+						bestTime = windowQueues[i].totalTime
 					}
 				}
-				windowQueues[bestWindow].time += client.time
-				windowQueues[bestWindow].clients = append(windowQueues[bestWindow].clients, client.name)
+				windowQueues[bestIndex].totalTime += client.time
+				windowQueues[bestIndex].clients = append(windowQueues[bestIndex].clients, client.name)
 			}
 
-			goto PrintResult
-
-		case "EXIT":
+			// Вывод результатов и завершение
+			fmt.Println("\nРаспределение клиентов по окнам:")
+			for i, window := range windowQueues {
+				fmt.Printf("Окно %d (%d мин): ", i+1, window.totalTime)
+				for _, client := range window.clients {
+					fmt.Print(client, " ")
+				}
+				fmt.Println()
+			}
 			return
 
 		default:
-			fmt.Println("Неизвестная команда. Введите ENQUEUE, DEQUEUE или EXIT.")
+			fmt.Println("Неизвестная команда. Введите ENQUEUE или DISTRIBUTE.")
 		}
-	}
-
-PrintResult:
-	for i, window := range windowQueues {
-		fmt.Printf("Окно %d (%d мин): ", i+1, window.time)
-		for _, client := range window.clients {
-			fmt.Print(client, " ")
-		}
-		fmt.Println()
 	}
 }
