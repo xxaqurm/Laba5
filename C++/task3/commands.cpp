@@ -1,5 +1,6 @@
 #include "commands.h"
 #include <iostream>
+#include <algorithm>
 #include <set>
 
 using namespace std;
@@ -59,6 +60,20 @@ void STOPS_IN_TRAM(string tramName, map<string, vector<string>>& tramRoutes) {
     cout << "Остановки трамвая " << tramName << ": ";
     for (auto& stop : tramRoutes[tramName]) {
         cout << stop << " ";
+    }
+    cout << endl;
+    
+    for (auto& tram: tramRoutes) {
+        for (auto& tramStop : tram.second) {
+            if (find(tramRoutes[tramName].begin(), tramRoutes[tramName].end(), tramStop) != tramRoutes[tramName].end() && tramName != tram.first) {
+                cout << tram.first << ": ";
+                for (auto& tramStop : tramRoutes[tram.first]) {
+                    cout << tramStop << " ";
+                }
+                cout << endl;
+                break;
+            }
+        }
     }
     cout << endl;
 }

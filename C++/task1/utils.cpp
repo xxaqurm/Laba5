@@ -15,23 +15,37 @@ bool validateInput(string command, string itemName, int items, char zone, int se
     /* Проверяет корректность ввода */
     if (zone < 'A' || zone > 'A' + STORAGEZONECOUNT - 1) {
         cout << "Некорректная зона. Зона должна быть от A до " << (char)('A' + STORAGEZONECOUNT - 1) << endl;
+        cin.clear();
+        cin.ignore();
         return false;
     } else if (section < 1 || section > SHELVESPERZONE) {
         cout << "Некорректный номер секции. Секция должна быть от 1 до " << SHELVESPERZONE << endl;
+        cin.clear();
+        cin.ignore();
         return false;
     } else if (verticalSection < 1 || verticalSection > VERTICALSECTIONCOUNT) {
         cout << "Некорректный номер вертикальной секции. Вертикальная секция должна быть от 1 до " << VERTICALSECTIONCOUNT << endl;
+        cin.clear();
+        cin.ignore();
         return false;
     } else if (shelf < 1 || shelf > SHELVESPERVERTICALSECTION) {
         cout << "Некорректный номер полки. Полка должна быть от 1 до " << SHELVESPERVERTICALSECTION << endl;
+        cin.clear();
+        cin.ignore();
         return false;
     } else if (items <= 0) {
         cout << "Некорректное количество предметов. Количество должно быть больше 0." << endl;
+        cin.clear();
+        cin.ignore();
         return false;
     } else if (sectionCode.length() != 4) {
         cout << "Некорректный код секции. Код секции должен состоять из 4 символов." << endl;
+        cin.clear();
+        cin.ignore();
         return false;
     }
+    cin.clear();
+    cin.ignore();
     return true;
 }
 
@@ -59,6 +73,16 @@ void INFO(map<vector<int>, map<string, int>> storage) {
 
 void ADD(map<vector<int>, map<string, int>>& storage, vector<int> address, string itemName, int items) {
     /* Добавляет предмет на склад */
+    int totalItems = 0;
+    for (auto& zone : storage) {
+        for (auto& item : zone.second) {
+            totalItems += item.second;
+        }
+    }
+    if (totalItems > 10) {
+        cout << "Количество предметов в ячейке не может превышать 10." << endl;
+        return;
+    }
     if (storage[address].find(itemName) != storage[address].end()) {
         storage[address][itemName] += items;
     } else {

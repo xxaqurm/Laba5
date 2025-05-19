@@ -11,6 +11,12 @@ void CHANGE(string region, string newCenter, map<string, string>& regions) {
     if (it != regions.end()) {
         cout << "Переименование названия административного (" << regions[region] << ") центра региона " << region << " в " << newCenter << endl;
     } else {
+        for (auto& region : regions) {
+            if (region.second == newCenter) {
+                cout << "Регион с таким центром уже существует." << endl;
+                return;
+            }
+        }
         cout << "Создание региона " << region << " с административным центром " << newCenter << endl;
     }
     regions[region] = newCenter;

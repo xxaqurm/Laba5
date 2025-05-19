@@ -43,9 +43,13 @@ int main() {
             }
             if (storage[{ zone - 'A', section, verticalSection, shelf }].find(itemName) != storage[{ zone - 'A', section, verticalSection, shelf }].end() && storage[{ zone - 'A', section, verticalSection, shelf }][itemName] + items > 10 || items > 10) {
                 cout << "Недостаточно места на складе. Максимальное количество предметов в ячейке: " << 10 << endl;
+                cin.clear();
+                cin.ignore();
                 continue;
             } else if (items < 0) {
                 cout << "Некорректное количество предметов. Количество должно быть больше 0." << endl;
+                cin.clear();
+                cin.ignore();
                 continue;
             }
             vector<int> address = { zone - 'A', section, verticalSection, shelf };

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <limits.h>
 
 using namespace std;
@@ -22,7 +23,7 @@ int main() {
     vector<pair<string, int>> clients;
 
     while (true) {
-        cout << "Введите команду (ENQUEUE, DEQUEUE, EXIT): ";
+        cout << "Введите команду (ENQUEUE, DISTRIBUTE): ";
         cin >> command;
 
         if (command == "ENQUEUE") {
@@ -33,34 +34,45 @@ int main() {
                 continue;
             }
             clients.push_back({"T" + to_string(numberOfClients), time});
-        } else if (command == "DEQUEUE") {
+        } else if (command == "DISTRIBUTE") {
             if (clients.empty()) {
                 cout << "Нет клиентов в очереди." << endl;
                 continue;
             }
+
+            sort(clients.begin(), clients.end(), [](const auto& a, const auto& b) {
+                return a.second > b.second;
+            });
+
+
             for (auto& client : clients) {
                 int bestWindow = 0;
                 int bestTime = INT_MAX;
-                for (auto& window : windowQueues) {
-                    if (window.first < bestTime) {
-                        bestTime = window.first;
-                        bestWindow = &window - &windowQueues[0];
+
+                for (int i = 0; i < windowCount; ++i) {
+                    if (windowQueues[i].first < bestTime) {
+                        bestTime = windowQueues[i].first;
+                        bestWindow = i;
                     }
                 }
+
                 windowQueues[bestWindow].first += client.second;
                 windowQueues[bestWindow].second.push_back(client.first);
             }
             break;
         } else {
-            cout << "Неизвестная команда. Введите ENQUEUE, DEQUEUE или EXIT." << endl;
+            cout << "Неизвестная команда. Введите ENQUEUE или DEQUEUE." << endl;
         }
     }
 
-    for (auto& window : windowQueues) {
-        cout << "Окно " << &window - &windowQueues[0] + 1 << " (" << window.first << " мин): ";
-        for (auto& client : window.second) {
+    // Вывод состояния окон
+    for (int i = 0; i < windowCount; ++i) {
+        cout << "Окно " << i + 1 << " (" << windowQueues[i].first << " мин): ";
+        for (const string& client : windowQueues[i].second) {
             cout << client << " ";
         }
         cout << endl;
     }
+
+    return 0;
 }

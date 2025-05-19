@@ -27,7 +27,6 @@ int main() {
             RENAME(old_region, new_region, regions);
         } else if (command == "ABOUT") {
             string region = "NONE";
-            
             cin >> region;
             ABOUT(region, regions);
         } else if (command == "ALL") {
